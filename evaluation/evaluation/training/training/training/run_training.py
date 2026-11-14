@@ -3,11 +3,11 @@
 AUREX — TRAINING LAUNCHER
 Created by: Pratyush Rao
 Project: XO AI Ecosystem
-Version: 0.1.0
+Version: 0.2.0
 ==================================================
 
 Description:
-Initializes the tokenizer, transformer and training pipeline.
+Initializes, trains and saves the AUREX language model.
 
 Status: Initial Development
 ==================================================
@@ -31,7 +31,6 @@ def main():
 
     print(f"AUREX training device: {device}")
 
-    # Small starter text; replace with an approved dataset later.
     training_text = (
         "AUREX is an independent artificial intelligence project. "
         "It learns language patterns through next token prediction. "
@@ -39,6 +38,9 @@ def main():
 
     tokenizer = AurexTokenizer()
     tokenizer.build_vocab(training_text)
+
+    # Save tokenizer for future generation.
+    tokenizer.save("aurex_tokenizer.json")
 
     token_ids = tokenizer.encode(training_text)
 
@@ -61,7 +63,8 @@ def main():
         batch_size=config.batch_size
     )
 
-    print("AUREX training run completed.")
+    print("AUREX training completed.")
+    print("Tokenizer and model checkpoint saved.")
 
 
 if __name__ == "__main__":
