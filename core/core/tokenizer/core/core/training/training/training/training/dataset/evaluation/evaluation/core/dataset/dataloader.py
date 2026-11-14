@@ -3,11 +3,11 @@
 AUREX — DATA LOADER
 Created by: Pratyush Rao
 Project: XO AI Ecosystem
-Version: 0.1.0
+Version: 0.2.0
 ==================================================
 
 Description:
-Converts tokenized text into training sequences.
+Creates input and target sequences for language training.
 
 Status: Initial Development
 ==================================================
@@ -20,15 +20,27 @@ from torch.utils.data import Dataset, DataLoader
 class AurexDataset(Dataset):
 
     def __init__(self, token_ids, sequence_length=64):
+
+        if len(token_ids) <= sequence_length:
+            raise ValueError(
+                "Token dataset must be longer than sequence length."
+            )
+
         self.token_ids = token_ids
         self.sequence_length = sequence_length
 
     def __len__(self):
-        return max(0, len(self.token_ids) - self.sequence_length)
+        return len(self.token_ids) - self.sequence_length
 
     def __getitem__(self, index):
-        x = self.token_ids[index:index + self.sequence_length]
-        y = self.token_ids[index + 1:index + self.sequence_length + 1]
+
+        x = self.token_ids[
+            index:index + self.sequence_length
+        ]
+
+        y = self.token_ids[
+            index + 1:index + self.sequence_length + 1
+        ]
 
         return (
             torch.tensor(x, dtype=torch.long),
@@ -36,12 +48,20 @@ class AurexDataset(Dataset):
         )
 
 
-def create_dataloader(token_ids, batch_size=16, sequence_length=64):
+def create_dataloader(
+    token_ids,
+    batch_size=16,
+    sequence_length=64
+):
 
-    dataset = AurexDataset(token_ids, sequence_length)
+    dataset = AurexDataset(
+        token_ids,
+        sequence_length
+    )
 
     return DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=True
+        shuffle=True,
+        drop_last=False
     )
