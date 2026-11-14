@@ -1,14 +1,14 @@
-
 """
 ==================================================
 AUREX — TRANSFORMER ARCHITECTURE
 Created by: Pratyush Rao
 Project: XO AI Ecosystem
-Version: 0.1.0
+Version: 0.2.0
 ==================================================
 
 Description:
-Defines the initial decoder-only transformer architecture.
+Decoder-style transformer for autoregressive
+next-token language modelling.
 
 Status: Initial Development
 ==================================================
@@ -26,9 +26,12 @@ class AurexTransformer(nn.Module):
         embedding_dim=128,
         num_heads=4,
         num_layers=2,
-        max_seq_length=256
+        max_seq_length=256,
+        dropout=0.1
     ):
         super().__init__()
+
+        self.max_seq_length = max_seq_length
 
         self.embedding = nn.Embedding(
             vocab_size,
@@ -44,19 +47,28 @@ class AurexTransformer(nn.Module):
             nn.TransformerEncoderLayer(
                 d_model=embedding_dim,
                 nhead=num_heads,
-                batch_first=True
+                dim_feedforward=embedding_dim * 4,
+                dropout=dropout,
+                batch_first=True,
+                norm_first=True
             )
             for _ in range(num_layers)
         ])
 
+        self.final_norm = nn.LayerNorm(embedding_dim)
+
         self.output_layer = nn.Linear(
             embedding_dim,
-            vocab_size
+            vocab_size,
+            bias=False
         )
 
     def forward(self, input_ids):
 
         batch_size, seq_length = input_ids.shape
+
+        if seq_length > self.max_seq_length:
+            raise ValueError("Sequence exceeds maximum length.")
 
         positions = torch.arange(
             seq_length,
@@ -79,6 +91,12 @@ class AurexTransformer(nn.Module):
         )
 
         for layer in self.layers:
-            x = layer(x, src_mask=causal_mask)
+            x = layer(
+                x,
+                src_mask=causal_mask,
+                is_causal=True
+            )
+
+        x = self.final_norm(x)
 
         return self.output_layer(x)
