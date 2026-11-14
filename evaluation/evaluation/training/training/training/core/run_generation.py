@@ -3,11 +3,12 @@
 AUREX — GENERATION LAUNCHER
 Created by: Pratyush Rao
 Project: XO AI Ecosystem
-Version: 0.1.0
+Version: 0.2.0
 ==================================================
 
 Description:
-Loads a trained AUREX model and generates text.
+Loads the saved tokenizer and trained model checkpoint
+to generate text.
 
 Status: Initial Development
 ==================================================
@@ -29,15 +30,8 @@ def main():
         "cuda" if torch.cuda.is_available() else "cpu"
     )
 
-    # This must match the tokenizer used during training.
     tokenizer = AurexTokenizer()
-
-    training_text = (
-        "AUREX is an independent artificial intelligence project. "
-        "It learns language patterns through next token prediction. "
-    ) * 100
-
-    tokenizer.build_vocab(training_text)
+    tokenizer.load("aurex_tokenizer.json")
 
     model = AurexTransformer(
         vocab_size=len(tokenizer.vocab),
@@ -49,7 +43,8 @@ def main():
 
     checkpoint = torch.load(
         config.checkpoint_path,
-        map_location=device
+        map_location=device,
+        weights_only=True
     )
 
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -60,13 +55,15 @@ def main():
         max_seq_length=config.max_seq_length
     )
 
+    prompt = input("You: ")
+
     result = generator.generate(
-        "AUREX is",
-        max_new_tokens=40
+        prompt,
+        max_new_tokens=60,
+        temperature=0.8
     )
 
-    print("\nAUREX OUTPUT:")
-    print(result)
+    print("\nAUREX:", result)
 
 
 if __name__ == "__main__":
